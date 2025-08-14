@@ -1,105 +1,136 @@
 #include <windows.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
-// Global handles
-HWND hInput, hKey, hOutput, hEncrypt, hDecrypt;
-HWND hInputLabel, hKeyLabel, hOutputLabel;
+// Control IDs
+#define ID_INPUT       101
+#define ID_KEY         102
+#define ID_ENCRYPT     103
+#define ID_DECRYPT     104
+#define ID_OUTPUT      105
+#define ID_CLEAR       106
 
-// Encrypt Function
-void encryptText(char *text, int key) {
-    for(int i=0; i<strlen(text); i++){
-        if(text[i]>='a' && text[i]<='z') text[i]=((text[i]-'a'+key)%26)+'a';
-        else if(text[i]>='A' && text[i]<='Z') text[i]=((text[i]-'A'+key)%26)+'A';
+HWND txtInput, txtKey, txtOutput;
+HWND btnEncrypt, btnDecrypt, btnClear;
+
+// Custom Caesar Cipher Encrypt
+void CipherEncrypt(char *text, int shift) {
+    for (int i = 0; text[i] != '\0'; i++) {
+        if (isalpha(text[i])) {
+            char base = isupper(text[i]) ? 'A' : 'a';
+            text[i] = (text[i] - base + shift) % 26 + base;
+        }
     }
 }
 
-// Decrypt Function
-void decryptText(char *text, int key){
-    for(int i=0; i<strlen(text); i++){
-        if(text[i]>='a' && text[i]<='z') text[i]=((text[i]-'a'-key+26)%26)+'a';
-        else if(text[i]>='A' && text[i]<='Z') text[i]=((text[i]-'A'-key+26)%26)+'A';
+// Custom Caesar Cipher Decrypt
+void CipherDecrypt(char *text, int shift) {
+    for (int i = 0; text[i] != '\0'; i++) {
+        if (isalpha(text[i])) {
+            char base = isupper(text[i]) ? 'A' : 'a';
+            text[i] = (text[i] - base - shift + 26) % 26 + base;
+        }
     }
 }
 
 // Window Procedure
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    switch(uMsg) {
-        case WM_CREATE:
-            // Input Section
-            hInputLabel = CreateWindow("STATIC", "Input Text:", WS_CHILD | WS_VISIBLE,
-                                       20, 20, 150, 20, hwnd, NULL, NULL, NULL);
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    char buffer[512], keyBuffer[10];
+    int keyValue;
 
-            hInput = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                  20, 45, 450, 25, hwnd, NULL, NULL, NULL);
+    switch (msg) {
+    case WM_CREATE:
+        CreateWindow("STATIC", "Enter Text:", WS_CHILD | WS_VISIBLE,
+            20, 20, 100, 20, hwnd, NULL, NULL, NULL);
 
-            // Key Section
-            hKeyLabel = CreateWindow("STATIC", "Key:", WS_CHILD | WS_VISIBLE,
-                                     20, 85, 100, 20, hwnd, NULL, NULL, NULL);
+        txtInput = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE | WS_BORDER,
+            20, 45, 460, 25, hwnd, (HMENU)ID_INPUT, NULL, NULL);
 
-            hKey = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                20, 110, 100, 25, hwnd, NULL, NULL, NULL);
+        CreateWindow("STATIC", "Key (1-25):", WS_CHILD | WS_VISIBLE,
+            20, 85, 100, 20, hwnd, NULL, NULL, NULL);
 
-            // Buttons (center aligned)
-            hEncrypt = CreateWindow("BUTTON", "Encrypt", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                                    150, 110, 120, 28, hwnd, (HMENU)1, NULL, NULL);
+        txtKey = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE | WS_BORDER,
+            20, 110, 80, 25, hwnd, (HMENU)ID_KEY, NULL, NULL);
 
-            hDecrypt = CreateWindow("BUTTON", "Decrypt", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                                    290, 110, 120, 28, hwnd, (HMENU)2, NULL, NULL);
+        btnEncrypt = CreateWindow("BUTTON", "Encrypt", WS_CHILD | WS_VISIBLE,
+            120, 110, 100, 25, hwnd, (HMENU)ID_ENCRYPT, NULL, NULL);
 
-            // Output Section
-            hOutputLabel = CreateWindow("STATIC", "Output Text:", WS_CHILD | WS_VISIBLE,
-                                        20, 160, 150, 20, hwnd, NULL, NULL, NULL);
+        btnDecrypt = CreateWindow("BUTTON", "Decrypt", WS_CHILD | WS_VISIBLE,
+            240, 110, 100, 25, hwnd, (HMENU)ID_DECRYPT, NULL, NULL);
 
-            hOutput = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_READONLY,
-                                   20, 185, 450, 25, hwnd, NULL, NULL, NULL);
-            break;
+        btnClear = CreateWindow("BUTTON", "Clear", WS_CHILD | WS_VISIBLE,
+            360, 110, 100, 25, hwnd, (HMENU)ID_CLEAR, NULL, NULL);
 
-        case WM_COMMAND:
-            if(LOWORD(wParam) == 1 || LOWORD(wParam) == 2) { // Encrypt or Decrypt
-                char text[500], keyText[10];
-                int key;
-                GetWindowText(hInput, text, 500);
-                GetWindowText(hKey, keyText, 10);
-                key = atoi(keyText);
+        CreateWindow("STATIC", "Result:", WS_CHILD | WS_VISIBLE,
+            20, 160, 100, 20, hwnd, NULL, NULL, NULL);
 
-                if(LOWORD(wParam) == 1)
-                    encryptText(text, key);
-                else
-                    decryptText(text, key);
+        txtOutput = CreateWindow("EDIT", "", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_READONLY,
+            20, 185, 460, 25, hwnd, (HMENU)ID_OUTPUT, NULL, NULL);
+        break;
 
-                SetWindowText(hOutput, text);
+    case WM_COMMAND:
+        switch (LOWORD(wParam)) {
+        case ID_ENCRYPT:
+        case ID_DECRYPT:
+            GetWindowText(txtInput, buffer, sizeof(buffer));
+            GetWindowText(txtKey, keyBuffer, sizeof(keyBuffer));
+            keyValue = atoi(keyBuffer);
+
+            if (strlen(buffer) == 0) {
+                MessageBox(hwnd, "Please enter text to process.", "Error", MB_ICONERROR);
+                break;
             }
+            if (keyValue < 1 || keyValue > 25) {
+                MessageBox(hwnd, "Please enter a valid key (1-25).", "Error", MB_ICONERROR);
+                break;
+            }
+
+            if (LOWORD(wParam) == ID_ENCRYPT) {
+                CipherEncrypt(buffer, keyValue);
+                SetWindowText(hwnd, "Mini Encryptor - Encryption Done");
+            } else {
+                CipherDecrypt(buffer, keyValue);
+                SetWindowText(hwnd, "Mini Encryptor - Decryption Done");
+            }
+            SetWindowText(txtOutput, buffer);
             break;
 
-        case WM_DESTROY:
-            PostQuitMessage(0);
+        case ID_CLEAR:
+            SetWindowText(txtInput, "");
+            SetWindowText(txtKey, "");
+            SetWindowText(txtOutput, "");
+            SetWindowText(hwnd, "Mini Encryptor - Ready");
             break;
+        }
+        break;
 
-        default:
-            return DefWindowProc(hwnd, uMsg, wParam, lParam);
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+
+    default:
+        return DefWindowProc(hwnd, msg, wParam, lParam);
     }
     return 0;
 }
 
-// Main Function
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    WNDCLASS wc = {0};
-    wc.lpfnWndProc = WindowProc;
-    wc.hInstance = hInstance;
-    wc.lpszClassName = "MiniEncrypt";
-    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1); // Window Color
+// WinMain
+int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmd, int nShow) {
+    WNDCLASS wc = { 0 };
+    wc.lpfnWndProc = WndProc;
+    wc.hInstance = hInst;
+    wc.lpszClassName = "MiniEncryptor";
+    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 
     RegisterClass(&wc);
 
-    HWND hwnd = CreateWindowEx(
-        0, "MiniEncrypt", "Mini Encryption-Decryption Tool",
-        WS_OVERLAPPEDWINDOW | WS_VISIBLE, 200, 200, 520, 280,
-        NULL, NULL, hInstance, NULL
-    );
+    HWND hwnd = CreateWindow("MiniEncryptor", "Mini Encryptor - Ready",
+        WS_OVERLAPPEDWINDOW | WS_VISIBLE, 300, 200, 520, 280,
+        NULL, NULL, hInst, NULL);
 
-    MSG msg = {0};
-    while(GetMessage(&msg, NULL, 0, 0)) {
+    MSG msg = { 0 };
+    while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
