@@ -1,4 +1,4 @@
-##Mini Encryption-Decryption Tool (C)
+**Mini Encryption-Decryption Tool (C)
 
 A simple Windows GUI application written in C using the Windows API, allowing users to encrypt and decrypt text using a Caesar Cipher algorithm.
 
