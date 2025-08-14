@@ -28,31 +28,6 @@ For decryption:
 
 new_char = ((char - base - key + 26) % 26) + base
 
-## 📂 File Structure
-
-<details>
-<summary>Show structure</summary>
-
-```text
-MiniEncrypt/
-├─ MiniEncrypt.c
-├─ README.md
-└─ screenshot.png
-
-
-
-⚙️ Compilation & Running
-Using GCC (MinGW) on Windows:
-gcc MiniEncrypt.c -o MiniEncrypt.exe -mwindows
-MiniEncrypt.exe
-
-Using Visual Studio:
-
-Create a Win32 Project.
-
-Replace main.c content with MiniEncrypt.c.
-
-Build and run.
 
  **Usage**
 
