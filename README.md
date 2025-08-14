@@ -14,7 +14,8 @@ Lightweight – No external libraries required.
 
 Instant Processing – Results appear immediately.
 
-<img width="632" height="342" alt="image" src="https://github.com/user-attachments/assets/1c71f8f8-9fe3-480c-bd87-939d9e09dfdc" />
+<img width="633" height="342" alt="image" src="https://github.com/user-attachments/assets/34c1d7a2-00ac-4457-bd7c-5ff1e21f6aa9" />
+
 
 **How It Works**
 
