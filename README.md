@@ -40,6 +40,7 @@ MiniEncrypt/
 └─ screenshot.png
 
 
+
 ⚙️ Compilation & Running
 Using GCC (MinGW) on Windows:
 gcc MiniEncrypt.c -o MiniEncrypt.exe -mwindows
